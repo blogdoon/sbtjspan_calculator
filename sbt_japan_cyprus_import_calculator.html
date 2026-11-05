@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SBT Japan → Cyprus Import Cost Calculator</title>
+<style>
+  :root { color-scheme: light; --ink:#172033; --muted:#65718a; --line:#dce2ec; --bg:#f4f6fa; --card:#fff; --accent:#176b55; --accent2:#e8f4ef; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:28px 16px 48px; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+  main { max-width:860px; margin:auto; }
+  header { margin-bottom:20px; }
+  h1 { margin:0 0 8px; font-size:clamp(1.6rem,4vw,2.25rem); line-height:1.15; }
+  h2 { font-size:1.15rem; margin:0 0 14px; }
+  p { margin:6px 0; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; margin:16px 0; box-shadow:0 4px 18px #1b2a4410; }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  label { display:block; font-size:.9rem; font-weight:650; margin-bottom:6px; }
+  input { width:100%; padding:11px 12px; border:1px solid #cbd3e0; border-radius:9px; font:inherit; color:var(--ink); background:#fff; }
+  input:focus { outline:3px solid #176b5522; border-color:var(--accent); }
+  .hint { font-size:.78rem; color:var(--muted); margin-top:5px; }
+  .summary { background:var(--accent2); border:1px solid #c9e5d8; border-radius:13px; padding:18px; }
+  .total-label { color:#315d4d; font-size:.85rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+  .total { color:var(--accent); font-size:clamp(2rem,7vw,3rem); font-weight:800; letter-spacing:-.04em; margin:2px 0 12px; }
+  .rows { display:grid; gap:9px; }
+  .row { display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid #d7e7df; padding-bottom:7px; }
+  .row span:first-child { color:#536174; }
+  .row strong { text-align:right; font-variant-numeric:tabular-nums; }
+  .row.emphasis { font-weight:750; border-bottom:0; padding-top:4px; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+  button { border:0; border-radius:9px; padding:11px 15px; font:inherit; font-weight:700; cursor:pointer; background:var(--accent); color:white; }
+  button.secondary { background:#e9edf3; color:var(--ink); }
+  button:hover { filter:brightness(.96); }
+  .note { font-size:.82rem; margin-top:14px; }
+  .foot { font-size:.78rem; color:var(--muted); }
+  @media (max-width:600px) { body { padding:18px 12px 32px; } .card { padding:16px; } .grid { grid-template-columns:1fr; gap:11px; } }
+  @media print { body { background:white; padding:0; } .card { box-shadow:none; break-inside:avoid; } .actions { display:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>SBT Japan → Cyprus Import Calculator</h1>
+    <p>Estimate the full cost of importing a vehicle from Japan to Cyprus. All amounts are in euros (€).</p>
+  </header>
+
+  <section class="card">
+    <h2>1. Japan costs 🇯🇵</h2>
+    <div class="grid">
+      <div><label for="carPrice">SBT Japan vehicle price (€)</label><input id="carPrice" type="number" min="0" step="0.01" value="12000"></div>
+      <div><label for="jpHandling">Japan handling / export fees (€)</label><input id="jpHandling" type="number" min="0" step="0.01" value="300"></div>
+      <div><label for="jpTax">Japan tax / other charges (€)</label><input id="jpTax" type="number" min="0" step="0.01" value="0"></div>
+      <div><label for="shipping">Shipping + insurance to Cyprus (€)</label><input id="shipping" type="number" min="0" step="0.01" value="1500"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Cyprus taxes and handling 🇨🇾</h2>
+    <div class="grid">
+      <div>
+        <label for="dutyRate">Import duty (%)</label>
+        <input id="dutyRate" type="number" min="0" max="100" step="0.1" value="10">
+        <div class="hint">Enter 0% only if the vehicle qualifies for preferential origin treatment and you have acceptable proof of origin.</div>
+      </div>
+      <div>
+        <label for="vatRate">Cyprus VAT (%)</label>
+        <input id="vatRate" type="number" min="0" max="100" step="0.1" value="19">
+        <div class="hint">Default set to 19%. Confirm the applicable VAT treatment for your import.</div>
+      </div>
+      <div><label for="cyHandling">Customs clearance / port / handling (€)</label><input id="cyHandling" type="number" min="0" step="0.01" value="350"></div>
+      <div><label for="registration">Registration / inspection / other (€)</label><input id="registration" type="number" min="0" step="0.01" value="200"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Your estimated total</h2>
+    <div class="summary" aria-live="polite">
+      <div class="total-label">Estimated total cost in Cyprus</div>
+      <div class="total" id="grandTotal">€0.00</div>
+      <div class="rows">
+        <div class="row"><span>Vehicle price</span><strong id="outPrice">€0.00</strong></div>
+        <div class="row"><span>Japan handling + tax</span><strong id="outJapan">€0.00</strong></div>
+        <div class="row"><span>Shipping + insurance</span><strong id="outShipping">€0.00</strong></div>
+        <div class="row"><span>Customs value estimate (CIF)</span><strong id="outCif">€0.00</strong></div>
+        <div class="row"><span>Import duty</span><strong id="outDuty">€0.00</strong></div>
+        <div class="row"><span>VAT estimate</span><strong id="outVat">€0.00</strong></div>
+        <div class="row"><span>Cyprus handling</span><strong id="outCyHandling">€0.00</strong></div>
+        <div class="row"><span>Registration / other</span><strong id="outRegistration">€0.00</strong></div>
+        <div class="row emphasis"><span>Total</span><strong id="outTotal">€0.00</strong></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" onclick="window.print()">Print / Save as PDF</button>
+      <button type="button" class="secondary" id="resetBtn">Reset example values</button>
+    </div>
+    <p class="note"><strong>Calculation method:</strong> estimated customs value (CIF) = vehicle price + shipping/insurance. Import duty = CIF × duty rate. VAT estimate = (CIF + import duty) × VAT rate. All entered Japan and Cyprus handling charges are then added to the total.</p>
+  </section>
+
+  <p class="foot">Planning estimate only, not a customs quotation. Customs may adjust the customs value and VAT base, and additional charges can apply (for example, storage, agent fees, conformity/inspection, registration, road tax or emissions-related charges). Confirm current rates, vehicle eligibility and documentation with Cyprus Customs or a licensed clearing agent before purchase.</p>
+</main>
+<script>
+(() => {
+  const ids = ['carPrice','jpHandling','jpTax','shipping','dutyRate','vatRate','cyHandling','registration'];
+  const el = id => document.getElementById(id);
+  const num = id => Math.max(0, Number(el(id).value) || 0);
+  const euro = n => new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(n);
+  function calculate() {
+    const price = num('carPrice');
+    const jpHandling = num('jpHandling');
+    const jpTax = num('jpTax');
+    const shipping = num('shipping');
+    const cif = price + shipping;
+    const duty = cif * num('dutyRate') / 100;
+    const vat = (cif + duty) * num('vatRate') / 100;
+    const cyHandling = num('cyHandling');
+    const registration = num('registration');
+    const total = price + jpHandling + jpTax + shipping + duty + vat + cyHandling + registration;
+    const values = {
+      grandTotal:total, outPrice:price, outJapan:jpHandling+jpTax,
+      outShipping:shipping, outCif:cif, outDuty:duty, outVat:vat,
+      outCyHandling:cyHandling, outRegistration:registration, outTotal:total
+    };
+    for (const [id,value] of Object.entries(values)) el(id).textContent = euro(value);
+  }
+  ids.forEach(id => el(id).addEventListener('input', calculate));
+  el('resetBtn').addEventListener('click', () => {
+    const defaults = {carPrice:12000,jpHandling:300,jpTax:0,shipping:1500,dutyRate:10,vatRate:19,cyHandling:350,registration:200};
+    for (const [id,value] of Object.entries(defaults)) el(id).value = value;
+    calculate();
+  });
+  calculate();
+})();
+</script>
+</body>
+</html>
